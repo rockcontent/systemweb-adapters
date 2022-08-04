@@ -122,6 +122,18 @@ internal partial class RemoteAppAuthenticationService : IRemoteAppAuthentication
 
         foreach (var headerName in headerNames)
         {
+            // HttpContext and HttpClient separate the cookies header with a , instead ; so it causes issues with .NET framework. 
+            // .NET 7 fixes this issue
+            // https://github.com/dotnet/aspnetcore/pull/41591
+            // https://github.com/microsoft/reverse-proxy/pull/1769
+            if (string.Equals(headerName, "Cookie", StringComparison.OrdinalIgnoreCase))
+            {
+                var cookies = originalRequest.Headers[headerName].ToArray();
+                var cookiesHeader = string.Join("; ", cookies);
+                authRequest.Headers.Add(headerName, cookiesHeader);
+                continue;
+            }
+
             authRequest.Headers.Add(headerName, originalRequest.Headers[headerName].ToArray());
         }
     }
