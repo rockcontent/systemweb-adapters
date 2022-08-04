@@ -79,6 +79,12 @@ internal partial class RemoteAppAuthenticationService : IRemoteAppAuthentication
             throw new InvalidOperationException("Remote authentication handler must be initialized before authenticating");
         }
 
+        if (_remoteAppOptions.DomainBinding.ContainsKey(originalRequest.Host.Host))
+        {
+            var baseRequestUrl = new Uri(_remoteAppOptions.DomainBinding[originalRequest.Host.Host]);
+            _client.BaseAddress = new Uri(baseRequestUrl, _options.AuthenticationEndpointPath);
+        }
+
         // Create a new HTTP request, but propagate along configured headers or cookies
         // that may matter for authentication. Also include the original request path as
         // as a query parameter so that the ASP.NET app can redirect back to it if an

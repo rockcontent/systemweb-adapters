@@ -21,6 +21,7 @@ internal partial class RemoteAppSessionStateManager : ISessionManager
     private readonly ISessionSerializer _serializer;
     private readonly ILogger<RemoteAppSessionStateManager> _logger;
     private readonly RemoteAppSessionStateOptions _options;
+    private readonly RemoteAppOptions _remoteOptions;
 
     public RemoteAppSessionStateManager(
         HttpClient client,
@@ -34,9 +35,9 @@ internal partial class RemoteAppSessionStateManager : ISessionManager
         _options = sessionOptions?.Value ?? throw new ArgumentNullException(nameof(sessionOptions));
         _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
 
-        var remoteOptions = remoteAppOptions?.Value ?? throw new ArgumentNullException(nameof(remoteAppOptions));
-        _client.BaseAddress = new Uri(remoteOptions.RemoteAppUrl, _options.SessionEndpointPath);
-        _client.DefaultRequestHeaders.Add(remoteOptions.ApiKeyHeader, remoteOptions.ApiKey);
+        _remoteOptions = remoteAppOptions?.Value ?? throw new ArgumentNullException(nameof(remoteAppOptions));
+        _client.BaseAddress = new Uri(_remoteOptions.RemoteAppUrl, _options.SessionEndpointPath);
+        _client.DefaultRequestHeaders.Add(_remoteOptions.ApiKeyHeader, _remoteOptions.ApiKey);
     }
 
     [LoggerMessage(EventId = 0, Level = LogLevel.Debug, Message = "Loaded {Count} items from remote session state for session {SessionId}")]
@@ -60,6 +61,12 @@ internal partial class RemoteAppSessionStateManager : ISessionManager
         // Otherwise, leave session ID null for now; it will be provided by the remote service
         // when session data is loaded.
         var sessionId = context.Request.Cookies[_options.CookieName];
+
+        if (_remoteOptions.DomainBinding.ContainsKey(context.Request.Host.Host))
+        {
+            var baseRequestUrl = new Uri(_remoteOptions.DomainBinding[context.Request.Host.Host]);
+            _client.BaseAddress = new Uri(baseRequestUrl, _options.SessionEndpointPath);
+        }
 
         try
         {

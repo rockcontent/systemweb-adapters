@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System;
+using System.Collections.Generic;
 #if NET6_0_OR_GREATER
 using System.ComponentModel.DataAnnotations;
 #endif
@@ -34,5 +35,12 @@ public class RemoteAppOptions
     /// </summary>
     [Required]
     public Uri RemoteAppUrl { get; set; } = null!;
+#endif
+
+#if NET6_0_OR_GREATER
+    /// <summary>
+    /// Bind the current domain's request with the dictionary key. If it matches, it will use the dictionary value to set the remote app url
+    /// </summary>
+    public Dictionary<string, string> DomainBinding { get; set; } = new Dictionary<string, string>();
 #endif
 }
